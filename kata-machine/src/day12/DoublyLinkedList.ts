@@ -9,58 +9,62 @@ export default class DoublyLinkedList<T> {
   private head?: Node<T>;
   private tail?: Node<T>;
 
+  private getAt(idx: number): Node<T> | undefined {
+    let curr = this.head;
+
+    for (let i = 0; curr && i < idx; i++) {
+      curr = curr.next;
+    }
+
+    return curr;
+  }
+
   prepend(item: T): void {
+    this.length++;
     const node: Node<T> = {
       value: item,
     }
 
-    this.length++;
-
     if (!this.head) {
       this.head = this.tail = node;
-      return
+      return;
     }
 
     node.next = this.head;
     this.head.prev = node;
     this.head = node;
   }
-
+  
   insertAt(item: T, idx: number): void {
     if (idx > this.length) {
-      throw new Error("Index provided is greater then list length");
+      throw new Error("Index out of bounds");
     }
-    
+
     if (idx === this.length) {
-      this.append(item)
-      return;
+      this.append(item);
+      return
     }
 
     if (idx === 0) {
       this.prepend(item);
-      return;
+      return
     }
 
-    let curr = this.head;
-
-    for (let i = 0; i < idx; i++) {
-      curr = curr?.next;
-    }
-
-    if (!curr) {
-      throw new Error("Failed to lookup item at index")
-    }    
-    
     this.length++;
-    const node: Node<T> = { value: item };
+    let curr = this.getAt(idx) as Node<T>;
+
+    const node: Node<T> = {
+      value: item,
+    }
+
     node.next = curr;
     node.prev = curr.prev;
     curr.prev = node;
 
-    if (curr.prev) {
-      curr.prev.next = curr;
+    if (node.prev) {
+      node.prev.next = curr;
     }
- }
+  }
 
   append(item: T): void {
     this.length++;
@@ -74,51 +78,72 @@ export default class DoublyLinkedList<T> {
     }
 
     node.prev = this.tail;
-    this.tail.next node;
+    this.tail.next = node;
     this.tail = node;
   }
-
   remove(item: T): T | undefined {
     let curr = this.head;
-
     for (let i = 0; curr && i < this.length; i++) {
-      curr = curr.next;
-
-      if (curr?.value === item) {
+      if (curr.value === item) {
         break;
       }
+
+      curr = curr.next;
     }
 
     if (!curr) {
       return;
     }
 
-    this.length--;
-
-    if (this.length === 0) {
-      this.head = this.tail = undefined;
-      return;
-    }
-
-    if (curr.prev) {
-      // curr.prev.next = curr.next;
-      curr.prev = curr.next
-    }
-
-    if (curr.next) {
-      // curr.next.prev = curr.prev;
-      curr.next = curr.prev
-    }
-
-    if (curr === this.head)e
-
-    curr.prev = curr.next = undefined;
+    return this.removeNode(curr);
   }
 
   get(idx: number): T | undefined {
-    return
+    return this.getAt(idx)?.value;
   }
+
+  private removeNode(curr: Node<T>): T | undefined {
+    this.length--;
+
+    if (this.length === 0) {
+      const out = this.head?.value;
+      this.head = this.tail = undefined;
+      return out;
+    }
+
+    // do we need to go one layer deeper here?
+    // I think this is wrong...
+    // I was right, the last implementation was wrong.
+    // this is now fixed
+    if (curr.prev) {
+      curr.prev.next = curr.next
+    }
+
+    if (curr.next) {
+      curr.next.prev = curr.prev;
+    }
+
+    if (curr === this.head) {
+      this.head = curr.next;
+    }
+
+    if (curr === this.tail) {
+      this.tail = curr.prev;
+    }
+
+    curr.prev = curr.next = undefined;
+
+    return curr.value;
+  }
+
   removeAt(idx: number): T | undefined {
-    return
+    const node = this.getAt(idx);
+
+    if (!node) {
+      return;
+    }
+
+    return this.removeNode(node);
   }
 }
+
